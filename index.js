@@ -1,13 +1,22 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 require('dotenv').config();
-const port = process.env.PORT || 6000;
+const port = process.env.PORT || 6001;
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
 // middlewire
-app.use(cors());
+// middlewire
+const corsOptions = {
+  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  credentials: true,
+  optionSuccessStatus: 2000
+}
+app.use(cors(corsOptions));
 app.use(express.json());
+
 
 
 
@@ -23,11 +32,36 @@ const client = new MongoClient(uri, {
   }
 });
 
+// cookie options
+const cookieOption = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production" ? true : false,
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "strict"
+}
+
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
-    // Send a ping to confirm a successful connection
+    
+    // jwt function starts
+    app.post('/jwt', async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: '100d'
+      })
+
+      res.cookie("token", token, cookieOption)
+        .send({ success: true })
+    })
+
+    app.post("/logout", async (req, res) => {
+      const user = req.body;
+      res.clearCookie("token", { ...cookieOption, maxAge: 0 })
+        .send({ success: true })
+    })
+    // jwt function ends
+
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
@@ -39,9 +73,9 @@ run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
-    res.send('server is running');
+  res.send('server is running');
 })
 
 app.listen(port, () => {
-    console.log(`server is running on port ${port}`)
+  console.log(`server is running on port ${port}`)
 })
