@@ -93,12 +93,24 @@ async function run() {
         query = { ...query, brandName: filterBrand }
       }
 
+      if (filterCategory) {
+        query = { ...query, category: filterCategory }
+      }
+
       let options = {};
       if (sortPrice) {
         options = { sort: { price: sortPrice === "asc" ? 1 : -1 } }
       }
+
+      let options1 = {};
+      if(sortDate) {
+        options1 = {sort: {creationDateTime: sortDate === "asc" ? 1 : -1 }}
+      }
+
+      const finalOptions = { ...options, ...options1, };
+
       const result = await productCollection
-        .find(query, options)
+        .find(query, finalOptions)
         .skip(page * size)
         .limit(size)
         .toArray();
