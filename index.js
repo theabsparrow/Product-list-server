@@ -9,7 +9,10 @@ const { MongoClient, ServerApiVersion } = require('mongodb');
 
 // middlewire
 const corsOptions = {
-  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  origin: ['http://localhost:5173',
+    'http://localhost:5174',
+    'https://product-list-935c1.web.app',
+    'https://product-list-935c1.firebaseapp.com'],
   credentials: true,
   optionSuccessStatus: 2000
 }
@@ -86,9 +89,12 @@ async function run() {
       const sortDate = req.query.sortDate;
       const filterBrand = req.query.filterBrand;
       const filterCategory = req.query.filterCategory;
-      const filterPrice = req.query.filterPrice;
-
-      let query = {};
+      const minPrice = parseInt(req.query.minPrice);
+      const maxPrice = parseInt(req.query.maxPrice);
+      const searchQuery = req.query.search;
+      let query = {
+        productName: { $regex: searchQuery, $options: 'i' }
+      };
       if (filterBrand) {
         query = { ...query, brandName: filterBrand }
       }
@@ -97,14 +103,18 @@ async function run() {
         query = { ...query, category: filterCategory }
       }
 
+      if (minPrice && maxPrice) {
+        query = { ...query, price: { $gte: minPrice, $lte: maxPrice } };
+      }
+
       let options = {};
       if (sortPrice) {
         options = { sort: { price: sortPrice === "asc" ? 1 : -1 } }
       }
 
       let options1 = {};
-      if(sortDate) {
-        options1 = {sort: {creationDateTime: sortDate === "asc" ? 1 : -1 }}
+      if (sortDate) {
+        options1 = { sort: { creationDateTime: sortDate === "asc" ? 1 : -1 } }
       }
 
       const finalOptions = { ...options, ...options1, };
@@ -120,17 +130,27 @@ async function run() {
     // for data count
     app.get('/products-count', verifyToken, async (req, res) => {
       const filterBrand = req.query.filterBrand;
-      let query = {};
+      const searchQuery = req.query.search;
+      const minPrice = parseInt(req.query.minPrice);
+      const maxPrice = parseInt(req.query.maxPrice);
+
+      let query = {
+        productName: { $regex: searchQuery, $options: 'i' }
+      };
+
+      if (minPrice && maxPrice) {
+        query = { ...query, price: { $gte: minPrice, $lte: maxPrice } };
+      }
+
       if (filterBrand) query = { brandName: filterBrand }
       const count = await productCollection.countDocuments(query);
       res.send({ count });
     })
 
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
+
   }
 }
 run().catch(console.dir);
