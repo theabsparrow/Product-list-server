@@ -78,8 +78,9 @@ async function run() {
     // jwt function ends
 
     app.get('/products', verifyToken, async (req, res) => {
-      const cursor = productCollection.find();
-      const result = await cursor.toArray();
+      const size = parseInt(req.query.size);
+      const page = parseInt(req.query.page) - 1;
+      const result = await productCollection.find().skip(page*size).limit(size).toArray();
       res.send(result);
     })
 
@@ -93,7 +94,7 @@ async function run() {
     // for data count
     app.get('/products-count', verifyToken, async (req, res) => {
       const count = await productCollection.countDocuments();
-      res.send({count});
+      res.send({ count });
     })
 
     await client.db("admin").command({ ping: 1 });
