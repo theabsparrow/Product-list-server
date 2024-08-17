@@ -55,6 +55,9 @@ const cookieOption = {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
+
+    const dataBase = client.db('productList');
+    const productCollection = dataBase.collection('products')
     
     // jwt function starts
     app.post('/jwt', async (req, res) => {
@@ -73,6 +76,12 @@ async function run() {
         .send({ success: true })
     })
     // jwt function ends
+
+    app.get('/products', async(req, res) => {
+            const cursor = productCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+    })
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
