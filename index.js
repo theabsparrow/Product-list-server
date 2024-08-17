@@ -58,7 +58,7 @@ async function run() {
 
     const dataBase = client.db('productList');
     const productCollection = dataBase.collection('products')
-    
+
     // jwt function starts
     app.post('/jwt', async (req, res) => {
       const user = req.body;
@@ -77,10 +77,23 @@ async function run() {
     })
     // jwt function ends
 
-    app.get('/products', async(req, res) => {
-            const cursor = productCollection.find();
-            const result = await cursor.toArray();
-            res.send(result);
+    app.get('/products', verifyToken, async (req, res) => {
+      const cursor = productCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    })
+
+    // for pagination
+    app.get('/all-products', verifyToken, async (req, res) => {
+      const cursor = productCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    })
+
+    // for data count
+    app.get('/products-count', verifyToken, async (req, res) => {
+      const count = await productCollection.countDocuments();
+      res.send({count});
     })
 
     await client.db("admin").command({ ping: 1 });
