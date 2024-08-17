@@ -78,22 +78,32 @@ async function run() {
     // jwt function ends
 
     app.get('/products', verifyToken, async (req, res) => {
+      // for pagination
       const size = parseInt(req.query.size);
       const page = parseInt(req.query.page) - 1;
-      const result = await productCollection.find().skip(page*size).limit(size).toArray();
-      res.send(result);
-    })
+// for sorting and filtering
+      const sortPrice = req.query.sortPrice;
+      const sortDate = req.query.sortDate;
+      const filterBrand = req.query.filterBrand;
+      const filterCategory = req.query.filterCategory;
+      const filterPrice = req.query.filterPrice;
 
-    // for pagination
-    app.get('/all-products', verifyToken, async (req, res) => {
-      const cursor = productCollection.find();
-      const result = await cursor.toArray();
+      let query = {};
+      if(filterBrand) query = {brandName:filterBrand}
+      const result = await productCollection
+        .find(query)
+        .skip(page * size)
+        .limit(size)
+        .toArray();
       res.send(result);
     })
 
     // for data count
     app.get('/products-count', verifyToken, async (req, res) => {
-      const count = await productCollection.countDocuments();
+      const filterBrand = req.query.filterBrand;
+      let query = {};
+      if(filterBrand) query = {brandName:filterBrand}
+      const count = await productCollection.countDocuments(query);
       res.send({ count });
     })
 
