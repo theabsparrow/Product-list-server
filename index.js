@@ -81,7 +81,7 @@ async function run() {
       // for pagination
       const size = parseInt(req.query.size);
       const page = parseInt(req.query.page) - 1;
-// for sorting and filtering
+      // for sorting and filtering
       const sortPrice = req.query.sortPrice;
       const sortDate = req.query.sortDate;
       const filterBrand = req.query.filterBrand;
@@ -89,9 +89,16 @@ async function run() {
       const filterPrice = req.query.filterPrice;
 
       let query = {};
-      if(filterBrand) query = {brandName:filterBrand}
+      if (filterBrand) {
+        query = { ...query, brandName: filterBrand }
+      }
+
+      let options = {};
+      if (sortPrice) {
+        options = { sort: { price: sortPrice === "asc" ? 1 : -1 } }
+      }
       const result = await productCollection
-        .find(query)
+        .find(query, options)
         .skip(page * size)
         .limit(size)
         .toArray();
@@ -102,7 +109,7 @@ async function run() {
     app.get('/products-count', verifyToken, async (req, res) => {
       const filterBrand = req.query.filterBrand;
       let query = {};
-      if(filterBrand) query = {brandName:filterBrand}
+      if (filterBrand) query = { brandName: filterBrand }
       const count = await productCollection.countDocuments(query);
       res.send({ count });
     })
