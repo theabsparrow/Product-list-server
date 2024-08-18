@@ -117,7 +117,7 @@ async function run() {
         options1 = { sort: { creationDateTime: sortDate === "asc" ? 1 : -1 } }
       }
 
-      const finalOptions = { ...options, ...options1, };
+      const finalOptions = { ...options, ...options1 };
 
       const result = await productCollection
         .find(query, finalOptions)
@@ -128,7 +128,7 @@ async function run() {
     })
 
     // save product in database
-    app.post('/add-product', async(req, res) => {
+    app.post('/add-product', verifyToken, async(req, res) => {
       const productData = req.body;
       const result = await productCollection.insertOne(productData);
       res.send(result);
@@ -140,6 +140,7 @@ async function run() {
       const searchQuery = req.query.search;
       const minPrice = parseInt(req.query.minPrice);
       const maxPrice = parseInt(req.query.maxPrice);
+      const filterCategory = req.query.filterCategory;
 
       let query = {
         productName: { $regex: searchQuery, $options: 'i' }
@@ -150,6 +151,10 @@ async function run() {
       }
 
       if (filterBrand) query = { brandName: filterBrand }
+
+      if (filterCategory) {
+        query = { ...query, category: filterCategory }
+      }
       const count = await productCollection.countDocuments(query);
       res.send({ count });
     })
