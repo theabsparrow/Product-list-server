@@ -127,6 +127,13 @@ async function run() {
       res.send(result);
     })
 
+    // save product in database
+    app.post('/add-product', async(req, res) => {
+      const productData = req.body;
+      const result = await productCollection.insertOne(productData);
+      res.send(result);
+    })
+
     // for data count
     app.get('/products-count', verifyToken, async (req, res) => {
       const filterBrand = req.query.filterBrand;
